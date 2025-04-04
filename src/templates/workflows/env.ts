@@ -1,4 +1,8 @@
-name: Deploy to Server
+/**
+ * Get the GitHub workflow template for a Next.js project with environment variables
+ */
+export function getEnvNextWorkflow(): string {
+  return `name: Deploy to Server
 
 on:
   push:
@@ -17,7 +21,7 @@ jobs:
       
       - name: Get repository name
         id: repo-name
-        run: echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
+        run: echo "REPO_NAME=\${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
       
       - name: Prepare files for deployment
         run: |
@@ -29,39 +33,39 @@ jobs:
       - name: Create project directory on server
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: \${{ secrets.SERVER_HOST }}
+          username: \${{ secrets.SERVER_USER }}
+          key: \${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            mkdir -p /home/ssw/${{ env.REPO_NAME }}
+            mkdir -p /home/ssw/\${{ env.REPO_NAME }}
       
       - name: Copy project files to server
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: \${{ secrets.SERVER_HOST }}
+          username: \${{ secrets.SERVER_USER }}
+          key: \${{ secrets.SSH_PRIVATE_KEY }}
           source: "deploy/*"
-          target: "/home/ssw/${{ env.REPO_NAME }}"
+          target: "/home/ssw/\${{ env.REPO_NAME }}"
           rm: true  # Remove old files in the target directory
           strip_components: 1  # Remove the 'deploy' directory prefix
       
       - name: Build and deploy on server with secure env handling
         uses: appleboy/ssh-action@master
         env:
-          NEXT_PUBLIC_DATABASE_URL: ${{ secrets.NEXT_PUBLIC_DATABASE_URL }}
-          COMPOSE_PROJECT_NAME: "${{ env.REPO_NAME }}"
+          NEXT_PUBLIC_DATABASE_URL: \${{ secrets.NEXT_PUBLIC_DATABASE_URL }}
+          COMPOSE_PROJECT_NAME: "\${{ env.REPO_NAME }}"
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: \${{ secrets.SERVER_HOST }}
+          username: \${{ secrets.SERVER_USER }}
+          key: \${{ secrets.SSH_PRIVATE_KEY }}
           envs: NEXT_PUBLIC_DATABASE_URL,COMPOSE_PROJECT_NAME
           script: |
-            cd /home/ssw/${{ env.REPO_NAME }}
+            cd /home/ssw/\${{ env.REPO_NAME }}
             
             # Export environment variables
-            export NEXT_PUBLIC_DATABASE_URL="${NEXT_PUBLIC_DATABASE_URL}"
-            export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME}"
+            export NEXT_PUBLIC_DATABASE_URL="\${NEXT_PUBLIC_DATABASE_URL}"
+            export COMPOSE_PROJECT_NAME="\${COMPOSE_PROJECT_NAME}"
             
             # Force removal of any existing containers for this project
             docker compose down
@@ -82,3 +86,5 @@ jobs:
             # Clear environment variables
             unset NEXT_PUBLIC_DATABASE_URL
             unset COMPOSE_PROJECT_NAME
+`
+}

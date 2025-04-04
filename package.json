@@ -1,0 +1,43 @@
+{
+  "name": "nextjs-deploy-cli",
+  "version": "1.0.0",
+  "description": "CLI tool for setting up Next.js deployment configurations",
+  "type": "module",
+  "main": "src/index.ts",
+  "bin": {
+    "nextjs-deploy": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "bun src/index.ts",
+    "build": "bun build ./src/index.ts --outdir ./dist --target node",
+    "dev": "bun --watch src/index.ts"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "nextjs",
+    "deployment",
+    "cli",
+    "docker"
+  ],
+  "author": "Anirudh Dayanand",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@types/figlet": "^1.7.0",
+    "@types/inquirer": "^9.0.7",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "figlet": "^1.8.0",
+    "form-data": "^4.0.2",
+    "inquirer": "^12.5.2",
+    "node-fetch": "^3.3.2"
+  }
+}

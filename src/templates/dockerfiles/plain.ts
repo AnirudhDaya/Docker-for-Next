@@ -1,4 +1,8 @@
-FROM oven/bun:alpine AS base
+/**
+ * Get the Dockerfile template for a plain Next.js project
+ */
+export function getPlainNextDockerfile(): string {
+    return `FROM oven/bun:alpine AS base
 
 # Stage 1: Install dependencies
 FROM base AS deps
@@ -22,4 +26,6 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
 EXPOSE 3000
-CMD ["bun", "run", "server.js"]
+CMD ["bun", "run", "server.js"]`
+}
+
