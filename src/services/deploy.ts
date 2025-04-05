@@ -1,10 +1,12 @@
 import { writeContentToFile, ensureDir } from '../utils/file.js';
 import { DeployConfig, EnvVariables } from '../types.js';
-import { generateTemplates } from './template.js';
+
 import { loadEnvFile, generateEnvFileContent } from './env.js';
 import { uploadEnvToGitHubSecrets } from '../utils/github.js';
 import { log, logStep, logSuccess, logInfo } from '../utils/logger.js';
 import { join } from 'path';
+import { generateTemplates } from './template.js';
+
 
 /**
  * Setup the deployment configuration
@@ -26,15 +28,9 @@ export async function setupDeployment(config: DeployConfig): Promise<void> {
     throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
   }
   
-  // Step 2: Generate deployment files from templates
-  logStep(2, 'Generating deployment files');
-  const templates = generateTemplates(config.projectType, envVariables, config.domainName);
+  // Step 2: Generate placeholder deployment files (will be updated after uploading to GitHub)
   
-  // Step 3: Write files
-  logStep(3, 'Creating project files');
-  for (const template of templates) {
-    await writeContentToFile(template.fileName, template.content);
-  }
+  // We'll write files in Step 6 after getting the dynamic env variables
   
   // Step 4: Verify SSH configuration
   logStep(4, 'Verifying SSH configuration');
@@ -45,14 +41,28 @@ export async function setupDeployment(config: DeployConfig): Promise<void> {
   
   // Step 5: Upload environment variables to GitHub
   logStep(5, 'Uploading environment variables to GitHub secrets');
-  await uploadEnvToGitHubSecrets(
+  const { response, envVars } = await uploadEnvToGitHubSecrets(
     config.repoName,
     config.githubPAT,
     config.envFilePath
   );
   
-  // Step 6: Provide final instructions
-  logStep(6, 'Deployment setup completed');
+  // Step 6: Generate templates with dynamic environment variables and write files
+  logStep(6, 'Generating and writing deployment files with dynamic environment variables');
+  const templates = generateTemplates(
+    config.projectType, 
+    envVariables, 
+    config.domainName,
+    envVars
+  );
+  
+  // Write the files
+  for (const template of templates) {
+    await writeContentToFile(template.fileName, template.content);
+  }
+  
+  // Step 7: Provide final instructions
+  logStep(7, 'Deployment setup completed');
   
   logSuccess('All deployment files have been created:');
   console.log('- Dockerfile');
@@ -66,13 +76,7 @@ export async function setupDeployment(config: DeployConfig): Promise<void> {
   console.log('   when you push to the main branch');
   
   console.log('\nNote: The following secrets have been added to your GitHub repository:');
-  console.log('- SERVER_HOST');
-  console.log('- SERVER_USER');
-  console.log('- SSH_PRIVATE_KEY');
-  
-  if (config.projectType === 'env') {
-    console.log('- NEXT_PUBLIC_DATABASE_URL');
-  } else if (config.projectType === 'prisma') {
-    console.log('- DATABASE_URL');
-  }
+  envVars.forEach(varName => {
+    console.log(`- ${varName}`);
+  });
 }

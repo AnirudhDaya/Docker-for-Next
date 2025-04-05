@@ -16,7 +16,7 @@ export async function uploadEnvToGitHubSecrets(
   repo: string,
   pat: string,
   envFilePath: string
-): Promise<GitHubSecretsResponse> {
+): Promise<{response: GitHubSecretsResponse, envVars: string[]}>  {
   try {
     // Resolve env file path
     const resolvedEnvPath = resolvePath(envFilePath);
@@ -46,16 +46,14 @@ export async function uploadEnvToGitHubSecrets(
         logError(`Failed variables: ${result.variables.join(', ')}`);
       }
     }
-    
-    return result;
+    return {
+      response: result,
+      envVars: result.variables || []
+    };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logError(`Failed to upload environment variables: ${errorMessage}`);
     
-    // Return a failure response
-    return {
-      success: false,
-      variables: [`Error: ${errorMessage}`]
-    };
+    throw new Error(`Failed to upload environment variables: ${(error as Error).message}`);
   }
 }

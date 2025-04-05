@@ -23,6 +23,7 @@ export async function startCLI(): Promise<void> {
     await setupDeployment(config);
     
     logSuccess('Deployment setup completed successfully!');
+    process.exit(0);
   } catch (error) {
     logError('Failed to setup deployment');
     if (error instanceof Error) {
