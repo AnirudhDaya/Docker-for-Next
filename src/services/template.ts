@@ -1,5 +1,3 @@
-// Modified version of the template.ts file to fix the environment variable issue
-
 import { ProjectType, EnvVariables, TemplateFile } from '../types.js';
 import { injectEnvVariables } from './env.js';
 import { getPlainNextDockerfile, getEnvNextDockerfile, getPrismaNextDockerfile } from '../templates/dockerfiles/index.js';

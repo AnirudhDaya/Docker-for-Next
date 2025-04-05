@@ -1,10 +1,9 @@
-import { writeContentToFile, ensureDir } from '../utils/file.js';
+import { writeContentToFile } from '../utils/file.js';
 import { DeployConfig, EnvVariables } from '../types.js';
 
-import { loadEnvFile, generateEnvFileContent } from './env.js';
+import { loadEnvFile } from './env.js';
 import { uploadEnvToGitHubSecrets } from '../utils/github.js';
-import { log, logStep, logSuccess, logInfo } from '../utils/logger.js';
-import { join } from 'path';
+import { logStep, logSuccess, logInfo } from '../utils/logger.js';
 import { generateTemplates } from './template.js';
 
 

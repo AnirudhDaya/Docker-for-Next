@@ -1,6 +1,3 @@
-import fetch from 'node-fetch';
-import { readFile } from 'node:fs/promises';
-import { createReadStream } from 'node:fs';
 import { GitHubSecretsResponse } from '../types.js';
 import { log, logSuccess, logError } from './logger.js';
 import { resolvePath } from './file.js';

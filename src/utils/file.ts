@@ -1,19 +1,6 @@
-import { mkdir, writeFile, readFile, access } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { constants } from 'node:fs';
 import { logSuccess } from './logger.js';
-
-/**
- * Check if a file or directory exists
- */
-export async function fileExists(path: string): Promise<boolean> {
-  try {
-    await access(path, constants.F_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Create a directory if it doesn't exist
@@ -47,15 +34,6 @@ export async function readFileContent(filePath: string): Promise<string> {
     return await readFile(filePath, 'utf-8');
   } catch (error) {
     throw new Error(`Failed to read file ${filePath}: ${(error as Error).message}`);
-  }
-}
-
-/**
- * Create multiple files from a map of file paths to contents
- */
-export async function createFiles(files: Map<string, string>): Promise<void> {
-  for (const [filePath, content] of files.entries()) {
-    await writeContentToFile(filePath, content);
   }
 }
 

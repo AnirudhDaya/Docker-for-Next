@@ -26,4 +26,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+nextjs-deploy-cli-1.0.0.tgz
+
 secrets.txt

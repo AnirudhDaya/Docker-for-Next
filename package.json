@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "description": "CLI tool for setting up Next.js deployment configurations",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js", 
   "bin": {
-    "nextjs-deploy": "./src/index.ts"
+    "nextjs-deploy": "./dist/index.js" 
   },
   "scripts": {
     "start": "bun src/index.ts",
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
+    "prepublishOnly": "bun run build", 
     "dev": "bun --watch src/index.ts"
   },
   "files": [
