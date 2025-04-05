@@ -12,8 +12,12 @@ A command-line tool for setting up Next.js deployment configurations with Docker
   - Dockerfile
   - docker-compose.yml
   - GitHub Actions workflow for auto-deployment
-- Server deployment configuration
+- Dynamic environment variable handling:
+  - Automatically adds your environment variables to deployment files
+  - Updates build arguments and runtime environment in Docker
+  - Configures GitHub Actions with your environment variables
 - GitHub secrets setup via API
+- Domain configuration for deployment
 
 ## Installation
 
@@ -45,11 +49,15 @@ bunx nextjs-deploy-cli
 nextjs-deploy
 ```
 
-2. Prepare your `.env` file with the following variables:
+2. Prepare your `.env` file with the following required variables plus any additional variables your application needs:
    ```
    SERVER_HOST=your.server.com
    SERVER_USER=username
    SSH_PRIVATE_KEY=-----BEGIN OPENSSH PRIVATE KEY-----\n...
+   
+   # Application-specific variables (examples)
+   DATABASE_URL=postgresql://user:password@localhost:5432/mydb
+   API_KEY=your_api_key
    ```
 
 3. Follow the interactive prompts to configure your deployment:
@@ -60,9 +68,10 @@ nextjs-deploy
    - Specify the path to your .env file
 
 4. The CLI will:
-   - Generate Dockerfile and docker-compose.yml
-   - Create GitHub workflow for auto-deployment
    - Upload your environment variables as GitHub secrets
+   - Generate Dockerfile and docker-compose.yml with your environment variables
+   - Create GitHub workflow for auto-deployment with your environment variables
+   - Configure your domain in the deployment files
 
 ## Configuration Options
 
@@ -72,11 +81,17 @@ Basic Next.js project without special environment requirements.
 
 ### 2. Next.js with Environment Variables
 
-For projects that require environment variables, with proper handling in the Docker build process.
+For projects that require environment variables:
+- Automatically adds your environment variables to build and runtime environments
+- Configures docker-compose with your environment variables
+- Sets up GitHub Actions to securely pass your environment variables during deployment
 
 ### 3. Next.js with Prisma
 
-For projects using Prisma ORM, with specialized Docker setup for database connections.
+For projects using Prisma ORM:
+- Includes all environment variable handling from option 2
+- Adds Prisma-specific configuration in Dockerfile
+- Sets up proper DATABASE_URL handling for Prisma
 
 ## Requirements
 
