@@ -91,9 +91,44 @@ async function promptForConfig(): Promise<DeployConfig> {
     },
   ]);
 
+  const productionQuestions = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'setupProdBranch',
+      message: 'Do you want to setup a production branch with separate workflow?',
+      default: true,
+    }
+  ]);
+
+
+  // If user wants production branch setup
+  let prodConfig = {};
+  if (productionQuestions.setupProdBranch) {
+    prodConfig = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'prodDomainName',
+        message: 'Enter the domain name for production deployment:',
+        validate: (input: string) => (input.trim() ? true : 'Production domain name is required'),
+      },
+      {
+        type: 'input',
+        name: 'prodPort',
+        message: 'Enter the port for production deployment:',
+        default: '3000',
+        validate: (input: string) => {
+          const port = parseInt(input);
+          return (!isNaN(port) && port > 0 && port < 65536) ? true : 'Please enter a valid port number';
+        },
+      },
+    ]);
+  }
+
   return {
     projectType,
     ...commonQuestions,
     envFilePath,
+    ...productionQuestions,
+    ...prodConfig
   };
 }

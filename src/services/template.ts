@@ -2,7 +2,14 @@ import { ProjectType, EnvVariables, TemplateFile } from '../types.js';
 import { injectEnvVariables } from './env.js';
 import { getPlainNextDockerfile, getEnvNextDockerfile, getPrismaNextDockerfile } from '../templates/dockerfiles/index.js';
 import { getPlainNextCompose, getEnvNextCompose, getPrismaNextCompose } from '../templates/compose/index.js';
-import { getPlainNextWorkflow, getEnvNextWorkflow, getPrismaNextWorkflow } from '../templates/workflows/index.js';
+import { 
+  getPlainNextWorkflow, 
+  getEnvNextWorkflow, 
+  getPrismaNextWorkflow,
+  getPlainNextProdWorkflow,
+  getEnvNextProdWorkflow,
+  getPrismaNextProdWorkflow 
+} from '../templates/workflows/index.js';
 
 /**
  * Get the appropriate Dockerfile template for the selected project type
@@ -39,26 +46,51 @@ function getComposeTemplate(projectType: ProjectType): string {
 /**
  * Get the appropriate GitHub workflow template for the selected project type
  */
-function getWorkflowTemplate(projectType: ProjectType): string {
+function getWorkflowTemplate(projectType: ProjectType, setupProdBranch: boolean): string {
   switch (projectType) {
     case ProjectType.PLAIN:
-      return getPlainNextWorkflow();
+      return getPlainNextWorkflow(setupProdBranch);
     case ProjectType.ENV:
-      return getEnvNextWorkflow();
+      return getEnvNextWorkflow(setupProdBranch);
     case ProjectType.PRISMA:
-      return getPrismaNextWorkflow();
+      return getPrismaNextWorkflow(setupProdBranch);
     default:
       throw new Error(`Unknown project type: ${projectType}`);
   }
 }
 
 /**
+ * Get the appropriate production GitHub workflow template for the selected project type
+ */
+function getProdWorkflowTemplate(projectType: ProjectType): string {
+  switch (projectType) {
+    case ProjectType.PLAIN:
+      return getPlainNextProdWorkflow();
+    case ProjectType.ENV:
+      return getEnvNextProdWorkflow();
+    case ProjectType.PRISMA:
+      return getPrismaNextProdWorkflow();
+    default:
+      throw new Error(`Unknown project type: ${projectType}`);
+  }
+}
+
+/**
+ * Process a template and replace all instances of a hardcoded domain with a new domain
+ */
+function replaceDomain(template: string, oldDomain: string, newDomain: string): string {
+  return template.replace(new RegExp(oldDomain, 'g'), newDomain);
+}
+
+/**
  * Generate all required template files with environment variables injected
  */
 export function generateTemplates(
+  setupProdBranch: boolean,
   projectType: ProjectType, 
   envVars: EnvVariables = {}, 
   domainName?: string,
+  prodDomainName?: string,
   additionalEnvVars: string[] = []
 ): TemplateFile[] {
   const templates: TemplateFile[] = [];
@@ -68,11 +100,22 @@ export function generateTemplates(
   if (domainName) {
     variables.DOMAIN = domainName;
   }
+
+  // Add production domain to environment variables if provided
+  if (prodDomainName) {
+    variables.PROD_DOMAIN = prodDomainName;
+  }
   
   // Get raw templates
   let dockerfileTemplate = getDockerfileTemplate(projectType);
   let composeTemplate = getComposeTemplate(projectType);
-  let workflowTemplate = getWorkflowTemplate(projectType);
+  let workflowTemplate = getWorkflowTemplate(projectType, setupProdBranch);
+  
+  // Get production workflow template if needed
+  let prodWorkflowTemplate = "";
+  if (setupProdBranch) {
+    prodWorkflowTemplate = getProdWorkflowTemplate(projectType);
+  }
   
   // Filter out server-related variables
   const systemVars = ['SERVER_HOST', 'SERVER_USER', 'SSH_PRIVATE_KEY'];
@@ -180,6 +223,38 @@ export function generateTemplates(
         `envs: ${currentEnvs},${envsVarList}$2`
       );
     }
+
+    // If we're setting up a production branch, apply the same environment variable changes to the production workflow
+    if (setupProdBranch && prodWorkflowTemplate) {
+      // Add exports to prod workflow
+      prodWorkflowTemplate = prodWorkflowTemplate.replace(
+        /# Export environment variables\n/,
+        `# Export environment variables\n${workflowExportSection}`
+      );
+      
+      // Add unset commands to prod workflow
+      prodWorkflowTemplate = prodWorkflowTemplate.replace(
+        /# Clear environment variables\n/,
+        `# Clear environment variables\n${workflowUnsetSection}`
+      );
+      
+      // Add env variables to prod workflow
+      prodWorkflowTemplate = prodWorkflowTemplate.replace(
+        /env:([^\n]*)\n/,
+        `env:\n${workflowEnvSection}`
+      );
+      
+      // Add envs parameter to prod workflow
+      const prodEnvsMatch = prodWorkflowTemplate.match(envsParamRegex);
+      if (prodEnvsMatch) {
+        const currentProdEnvs = prodEnvsMatch[1];
+        const envsVarList = appEnvVars.join(',');
+        prodWorkflowTemplate = prodWorkflowTemplate.replace(
+          envsParamRegex,
+          `envs: ${currentProdEnvs},${envsVarList}$2`
+        );
+      }
+    }
   }
   
   // Update domain in compose file if provided
@@ -190,10 +265,24 @@ export function generateTemplates(
     );
   }
   
+  // Replace all instances of the hardcoded domain in workflow templates with the user's domain
+  const hardcodedDomain = "prod.domain.com";
+  if (setupProdBranch && prodDomainName) {
+    // Replace in both workflow templates
+    workflowTemplate = replaceDomain(workflowTemplate, hardcodedDomain, prodDomainName);
+    prodWorkflowTemplate = replaceDomain(prodWorkflowTemplate, hardcodedDomain, prodDomainName);
+  }
+
   // Inject environment variables
   const dockerfileContent = injectEnvVariables(dockerfileTemplate, variables);
   const composeContent = injectEnvVariables(composeTemplate, variables);
   const workflowContent = injectEnvVariables(workflowTemplate, variables);
+  
+  // Inject environment variables into prod workflow if needed
+  let prodWorkflowContent = "";
+  if (setupProdBranch && prodWorkflowTemplate) {
+    prodWorkflowContent = injectEnvVariables(prodWorkflowTemplate, variables);
+  }
   
   // Replace DOLLAR_SIGN placeholder with $ in final output
   const replaceVariablePlaceholder = (content: string): string => {
@@ -218,6 +307,14 @@ export function generateTemplates(
     fileName: '.github/workflows/deploy.yml',
     content: replaceVariablePlaceholder(workflowContent),
   });
+  
+  // Add the production workflow file if needed
+  if (setupProdBranch && prodWorkflowContent) {
+    templates.push({
+      fileName: '.github/workflows/deploy-prod.yml',
+      content: replaceVariablePlaceholder(prodWorkflowContent),
+    });
+  }
   
   return templates;
 }

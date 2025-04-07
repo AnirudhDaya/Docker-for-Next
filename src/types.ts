@@ -12,6 +12,9 @@ export interface DeployConfig {
   githubPAT: string;
   envFilePath: string;
   domainName?: string;
+  setupProdBranch: boolean;
+  prodDomainName?: string; 
+  prodPort?: number;
 }
 
 // Template file type

@@ -49,9 +49,11 @@ export async function setupDeployment(config: DeployConfig): Promise<void> {
   // Step 6: Generate templates with dynamic environment variables and write files
   logStep(6, 'Generating and writing deployment files with dynamic environment variables');
   const templates = generateTemplates(
+    config.setupProdBranch,
     config.projectType, 
     envVariables, 
     config.domainName,
+    config.prodDomainName,
     envVars
   );
   
@@ -67,15 +69,30 @@ export async function setupDeployment(config: DeployConfig): Promise<void> {
   console.log('- Dockerfile');
   console.log('- docker-compose.yml');
   console.log('- .github/workflows/deploy.yml');
-
+  
+  if (config.setupProdBranch) {
+    console.log('- .github/workflows/deploy-prod.yml');
+  }
   
   logInfo('Next steps:');
   console.log('1. Commit and push these files to your GitHub repository');
   console.log('2. GitHub Actions will automatically deploy your application');
   console.log('   when you push to the main branch');
   
+  if (config.setupProdBranch) {
+    console.log('3. For production deployment, merge changes to the prod branch or manually trigger the deploy-prod workflow');
+  }
+  
   console.log('\nNote: The following secrets have been added to your GitHub repository:');
   envVars.forEach(varName => {
     console.log(`- ${varName}`);
   });
+  
+  if (config.setupProdBranch && config.prodDomainName) {
+    console.log('\nProduction deployment information:');
+    console.log(`- Domain: ${config.prodDomainName}`);
+    if (config.prodPort) {
+      console.log(`- Port: ${config.prodPort}`);
+    }
+  }
 }

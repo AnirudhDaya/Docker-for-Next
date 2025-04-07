@@ -25,7 +25,7 @@ return `services:
     labels:
       - "traefik.enable=true"
       # HTTP Router - fixed quotes and explicit domain
-      - "traefik.http.routers.\${COMPOSE_PROJECT_NAME:-app}.rule=Host(\`test.raisevcfund.com\`)"
+      - "traefik.http.routers.\${COMPOSE_PROJECT_NAME:-app}.rule=Host(\`test.domain.com\`)"
       - "traefik.http.routers.\${COMPOSE_PROJECT_NAME:-app}.entrypoints=websecure"
       - "traefik.http.routers.\${COMPOSE_PROJECT_NAME:-app}.tls.certresolver=letsencrypt"
       # Service - make sure the port is correctly specified
