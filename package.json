@@ -1,6 +1,6 @@
 {
   "name": "nextjs-deploy-cli",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "CLI tool for setting up Next.js deployment configurations",
   "type": "module",
   "main": "dist/index.js",
