@@ -1,16 +1,16 @@
 {
   "name": "nextjs-deploy-cli",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "CLI tool for setting up Next.js deployment configurations",
   "type": "module",
-  "main": "dist/index.js", 
+  "main": "dist/index.js",
   "bin": {
-    "nextjs-deploy": "./dist/index.js" 
+    "nextjs-deploy": "./dist/index.js"
   },
   "scripts": {
     "start": "bun src/index.ts",
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
-    "prepublishOnly": "bun run build", 
+    "prepublishOnly": "bun run build",
     "dev": "bun --watch src/index.ts"
   },
   "files": [
