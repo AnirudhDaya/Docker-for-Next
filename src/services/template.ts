@@ -83,6 +83,13 @@ function replaceDomain(template: string, oldDomain: string, newDomain: string): 
 }
 
 /**
+ * Process a template and replace all instances of a hardcoded port with a new port
+ */
+function replacePort(template: string, oldPort: string, newPort: string): string {
+  return template.replace(new RegExp(oldPort, 'g'), newPort);
+}
+
+/**
  * Generate all required template files with environment variables injected
  */
 export function generateTemplates(
@@ -91,6 +98,7 @@ export function generateTemplates(
   envVars: EnvVariables = {}, 
   domainName?: string,
   prodDomainName?: string,
+  prodPort?: string | number,
   additionalEnvVars: string[] = []
 ): TemplateFile[] {
   const templates: TemplateFile[] = [];
@@ -104,6 +112,11 @@ export function generateTemplates(
   // Add production domain to environment variables if provided
   if (prodDomainName) {
     variables.PROD_DOMAIN = prodDomainName;
+  }
+
+  // Add production port to environment variables if provided
+  if (prodPort) {
+    variables.PROD_PORT = prodPort.toString();
   }
   
   // Get raw templates
@@ -271,6 +284,36 @@ export function generateTemplates(
     // Replace in both workflow templates
     workflowTemplate = replaceDomain(workflowTemplate, hardcodedDomain, prodDomainName);
     prodWorkflowTemplate = replaceDomain(prodWorkflowTemplate, hardcodedDomain, prodDomainName);
+  }
+  
+  // Replace all instances of the hardcoded port in workflow templates with the user's port
+  // Default port for production is 3001
+  const defaultProdPort = "3001";
+  if (setupProdBranch && prodPort) {
+    // We need to replace in the docker-compose port mapping pattern: 3001:3000
+    const oldPortPattern = `${defaultProdPort}:3000`;
+    const newPortPattern = `${prodPort}:3000`;
+    
+    // Replace in both workflow templates
+    workflowTemplate = replacePort(workflowTemplate, oldPortPattern, newPortPattern);
+    prodWorkflowTemplate = replacePort(prodWorkflowTemplate, oldPortPattern, newPortPattern);
+    
+    // Also need to replace in the sed command that updates the port mapping
+    const oldSedPortCmd = `sed -i 's/3000:3000/${defaultProdPort}:3000/g'`;
+    const newSedPortCmd = `sed -i 's/3000:3000/${prodPort}:3000/g'`;
+    
+    workflowTemplate = workflowTemplate.replace(oldSedPortCmd, newSedPortCmd);
+    prodWorkflowTemplate = prodWorkflowTemplate.replace(oldSedPortCmd, newSedPortCmd);
+    
+    // Update message in PR body
+    workflowTemplate = workflowTemplate.replace(
+      `- Updated port mapping from 3000:3000 to ${defaultProdPort}:3000`,
+      `- Updated port mapping from 3000:3000 to ${prodPort}:3000`
+    );
+    prodWorkflowTemplate = prodWorkflowTemplate.replace(
+      `- Updated port mapping from 3000:3000 to ${defaultProdPort}:3000`,
+      `- Updated port mapping from 3000:3000 to ${prodPort}:3000`
+    );
   }
 
   // Inject environment variables

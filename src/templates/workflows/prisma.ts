@@ -237,12 +237,15 @@ jobs:
             # Replace test domain with production domain
             sed -i 's/Host(\\\`[^\\\`]*\\\`)/Host(\\\`prod.domain.com\\\`)/g' docker-compose.yml
             
+            # Update the port from 3000:3000 to 3001:3000 for production
+            sed -i 's/3000:3000/3001:3000/g' docker-compose.yml
+            
             # Check if the file was actually modified
             if git diff --quiet docker-compose.yml; then
               echo "No changes found in docker-compose.yml"
               echo "changes_made=false" >> $GITHUB_OUTPUT
             else
-              echo "Domain updated to production in docker-compose.yml"
+              echo "Domain and port updated to production in docker-compose.yml"
               echo "changes_made=true" >> $GITHUB_OUTPUT
             fi
           else
@@ -256,11 +259,15 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: \${{ secrets.PAT }}
-          commit-message: Update domain to production
+          commit-message: Update domain and port for production
           title: Deploy to Production
           body: |
-            This PR updates the domain configuration for production deployment.
-            It was automatically created after a successful test deployment.
+            This PR updates the configuration for production deployment:
+            
+            - Changed domain to production (prod.raisevcfund.com)
+            - Updated port mapping from 3000:3000 to 3001:3000
+            
+            This PR was automatically created after a successful test deployment.
           branch: update-to-prod
           branch-suffix: timestamp
           delete-branch: true
@@ -305,6 +312,9 @@ jobs:
             Changed files include:
             \${{ env.CHANGED_FILES }}
           branch: sync-all-changes
+          branch-suffix: timestamp
+          delete-branch: true
+          base: prod
 `;
   }
 

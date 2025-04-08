@@ -54,6 +54,7 @@ export async function setupDeployment(config: DeployConfig): Promise<void> {
     envVariables, 
     config.domainName,
     config.prodDomainName,
+    config.prodPort,
     envVars
   );
   
