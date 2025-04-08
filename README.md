@@ -18,6 +18,10 @@ A command-line tool for setting up Next.js deployment configurations with Docker
   - Configures GitHub Actions with your environment variables
 - GitHub secrets setup via API
 - Domain configuration for deployment
+- Multi-environment support:
+  - Optional production branch setup with separate workflow
+  - Automatic domain and port configuration for production
+  - CI/CD support for both test and production environments
 
 ## Installation
 
@@ -66,12 +70,15 @@ nextjs-deploy
    - Provide your GitHub Personal Access Token (PAT)
    - Enter your domain name
    - Specify the path to your .env file
+   - Choose whether to set up a production branch
+   - If using production branch, specify production domain and port
 
 4. The CLI will:
    - Upload your environment variables as GitHub secrets
    - Generate Dockerfile and docker-compose.yml with your environment variables
-   - Create GitHub workflow for auto-deployment with your environment variables
+   - Create GitHub workflow(s) for auto-deployment with your environment variables
    - Configure your domain in the deployment files
+   - If production branch is enabled, create a separate production workflow
 
 ## Configuration Options
 
@@ -92,6 +99,28 @@ For projects using Prisma ORM:
 - Includes all environment variable handling from option 2
 - Adds Prisma-specific configuration in Dockerfile
 - Sets up proper DATABASE_URL handling for Prisma
+
+### 4. Production Branch Setup
+
+When enabled, sets up a dual-environment workflow:
+- Main branch for testing/staging environment
+- Prod branch for production environment
+- Automatic port configuration (e.g., 3000 for test, custom port for production)
+- Separate domain configuration for each environment
+- Automated PR creation for synchronizing changes to production
+
+## Deployment Workflow
+
+### Test Environment (Main Branch)
+1. Push code to the main branch
+2. GitHub Actions deploys to the test environment
+3. Application is available at your test domain
+
+### Production Environment (Prod Branch)
+1. After successful test deployment, a PR is created to update the prod branch
+2. Merge the PR to deploy to production
+3. GitHub Actions deploys to the production environment
+4. Application is available at your production domain and custom port
 
 ## Requirements
 
